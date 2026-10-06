@@ -1,0 +1,23 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate version and package
+        shell: powershell
+        run: |
+          if ($env:GITHUB_REF_NAME -ne 'v0.1.0') { throw 'Update package and assembly versions before releasing another tag.' }
+          ./scripts/Package.ps1
+      - name: Create draft prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create $env:GITHUB_REF_NAME artifacts/CloudMusicRemote-v0.1.0-win-x64.zip artifacts/SHA256SUMS.txt --draft --prerelease --verify-tag --title 'v0.1.0 — First AI-generated release' --notes-file docs/RELEASE-v0.1.0.md
+          if ($LASTEXITCODE -ne 0) { throw 'Release creation failed' }

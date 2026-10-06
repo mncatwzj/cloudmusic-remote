@@ -1,0 +1,11 @@
+dist/
+artifacts/
+*.exe
+*.pdb
+*.zip
+*.user
+*.suo
+.vs/
+.idea/
+Thumbs.db
+Desktop.ini
