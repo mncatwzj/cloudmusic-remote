@@ -14,268 +14,6 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 namespace CloudMusicRemote
 {
-    static class Program
-    {
-        [STAThread] static void Main(string[] args)
-        {
-            bool created;
-            using(var mutex=new Mutex(true,"Local\\CloudMusicRemote.v1",out created))
-            {
-                if(!created)
-                {
-                    IntPtr existing=FindWindow(null,"网易云 · 随手控");
-                    if(existing!=IntPtr.Zero)
-                    {
-                        ShowWindow(existing,9);
-                        SetForegroundWindow(existing);
-                    }
-                    return;
-                }
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                try
-                {
-                    Application.Run(new MainForm(Array.IndexOf(args,"--tray")>=0));
-                }
-                catch(Exception ex)
-                {
-                    MessageBox.Show(ex.Message,"随手控启动失败");
-                }
-            }
-        }
-        [DllImport("user32.dll",CharSet=CharSet.Unicode)]static extern IntPtr FindWindow(string className,string title);
-        [DllImport("user32.dll")]static extern bool ShowWindow(IntPtr window,int command);
-        [DllImport("user32.dll")]static extern bool SetForegroundWindow(IntPtr window);
-    }
-    public class MainForm : Form
-    {
-        RemoteServer server;
-        NotifyIcon tray;
-        MouseHook hook;
-        TextBox links;
-        Label hint;
-        ComboBox side;
-        CheckBox enabled;
-        bool exiting;
-        bool startHidden;
-        readonly string config=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"CloudMusicRemote","settings.txt");
-        public MainForm(bool hidden)
-        {
-            startHidden=hidden;
-            Text="网易云 · 随手控";
-            Size=new Size(650,540);
-            MinimumSize=Size;
-            StartPosition=FormStartPosition.CenterScreen;
-            Font=new Font("Microsoft YaHei UI",10);
-            BackColor=Color.FromArgb(246,247,250);
-            Icon=SystemIcons.Application;
-            var panel=new TableLayoutPanel
-            {
-                Dock=DockStyle.Fill,Padding=new Padding(24),ColumnCount=1,RowCount=9
-            };
-            Controls.Add(panel);
-            panel.Controls.Add(new Label
-            {
-                Text="网易云 · 随手控",Font=new Font(Font.FontFamily,21,FontStyle.Bold),AutoSize=true
-            });
-            panel.Controls.Add(new Label
-            {
-                Text="鼠标侧键切歌，手机随手遥控。",AutoSize=true,Margin=new Padding(0,8,0,14)
-            });
-            server=new RemoteServer();
-            panel.Controls.Add(new Label
-            {
-                Text="手机连接同一网络，浏览器打开下面任一地址：",AutoSize=true
-            });
-            links=new TextBox
-            {
-                Multiline=true,ReadOnly=true,Height=70,Dock=DockStyle.Top,ScrollBars=ScrollBars.Vertical
-            };
-            panel.Controls.Add(links);
-            RefreshLinks();
-            var pairing=new Label
-            {
-                Text="配对码   "+server.PairCode,Font=new Font(Font.FontFamily,24,FontStyle.Bold),AutoSize=true,Margin=new Padding(0,14,0,10)
-            };
-            panel.Controls.Add(pairing);
-            var row=new FlowLayoutPanel
-            {
-                AutoSize=true,Dock=DockStyle.Fill
-            };
-            var copy=new Button
-            {
-                Text="复制手机链接",AutoSize=true
-            };
-            copy.Click+=(s,e)=>
-            {
-                Clipboard.SetText(server.Links()[0]+"#"+server.PairCode);
-                hint.Text="已复制；可发到自己的手机，在浏览器打开。";
-            };
-            row.Controls.Add(copy);
-            var open=new Button
-            {
-                Text="本机打开遥控页",AutoSize=true
-            };
-            open.Click+=(s,e)=>Process.Start("http://127.0.0.1:"+server.Port+"/#"+server.PairCode);
-            row.Controls.Add(open);
-            var refresh=new Button
-            {
-                Text="刷新网络地址",AutoSize=true
-            };
-            refresh.Click+=(s,e)=>RefreshLinks();
-            row.Controls.Add(refresh);
-            panel.Controls.Add(row);
-            var keyrow=new FlowLayoutPanel
-            {
-                AutoSize=true,Dock=DockStyle.Fill
-            };
-            enabled=new CheckBox
-            {
-                Text="启用侧键 → 下一首",Checked=true,AutoSize=true,Margin=new Padding(0,8,12,0)
-            };
-            side=new ComboBox
-            {
-                DropDownStyle=ComboBoxStyle.DropDownList,Width=240
-            };
-            side.Items.AddRange(new object[]
-            {
-                "侧上键 / XButton2（默认）","另一侧键 / XButton1"
-            });
-            side.SelectedIndex=0;
-            if(File.Exists(config))
-            {
-                var value=File.ReadAllText(config);
-                side.SelectedIndex=value.StartsWith("1")?1:0;
-                enabled.Checked=!value.EndsWith("off");
-            }
-            keyrow.Controls.Add(enabled);
-            keyrow.Controls.Add(side);
-            panel.Controls.Add(keyrow);
-            hint=new Label
-            {
-                Text="侧键无效时可换另一个侧键。音量按钮调节网易云内的音量。\n关闭窗口会缩到托盘；右击托盘图标可彻底退出。",AutoSize=true,MaximumSize=new Size(570,0),Margin=new Padding(0,12,0,0)
-            };
-            panel.Controls.Add(hint);
-            var bottom=new FlowLayoutPanel
-            {
-                AutoSize=true,Dock=DockStyle.Fill
-            };
-            var firewall=new Button
-            {
-                Text="允许手机连接…",AutoSize=true
-            };
-            firewall.Click+=(s,e)=>
-            {
-                try
-                {
-                    var p=new ProcessStartInfo("powershell.exe","-NoProfile -ExecutionPolicy Bypass -File \""+Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"Allow-Phone.ps1")+"\" -Port "+server.Port)
-                    {
-                        UseShellExecute=true,Verb="runas",WindowStyle=ProcessWindowStyle.Hidden
-                    };
-                    Process.Start(p);
-                    hint.Text="请完成 Windows 管理员确认，然后用手机重试。";
-                }
-                catch(Exception ex)
-                {
-                    hint.Text="未设置网络访问："+ex.Message;
-                }
-            };
-            bottom.Controls.Add(firewall);
-            var quit=new Button
-            {
-                Text="退出工具",AutoSize=true
-            };
-            quit.Click+=(s,e)=>ExitTool();
-            bottom.Controls.Add(quit);
-            panel.Controls.Add(bottom);
-            tray=new NotifyIcon
-            {
-                Icon=SystemIcons.Application,Text="网易云 · 随手控",Visible=true
-            };
-            tray.DoubleClick+=(s,e)=>ShowMain();
-            var menu=new ContextMenuStrip();
-            menu.Items.Add("打开控制面板",null,(s,e)=>ShowMain());
-            menu.Items.Add("退出",null,(s,e)=>ExitTool());
-            tray.ContextMenuStrip=menu;
-            hook=new MouseHook(()=>
-            {
-                ThreadPool.QueueUserWorkItem(_=>
-                {
-                    try
-                    {
-                        Music.Control("next");
-                    }
-                    catch(Exception ex)
-                    {
-                        try
-                        {
-                            BeginInvoke((Action)(()=>hint.Text=ex.Message));
-                        }
-                        catch
-                        {
-                        }
-                    }
-                });
-            });
-            SetHook();
-            side.SelectedIndexChanged+=(s,e)=>
-            {
-                SetHook();
-                Save();
-            };
-            enabled.CheckedChanged+=(s,e)=>
-            {
-                SetHook();
-                Save();
-            };
-            server.Start();
-            FormClosing+=(s,e)=>
-            {
-                if(!exiting&&e.CloseReason==CloseReason.UserClosing)
-                {
-                    e.Cancel=true;
-                    Hide();
-                    tray.ShowBalloonTip(2000,"随手控仍在运行","右击托盘图标可退出。",ToolTipIcon.Info);
-                }
-            };
-            FormClosed+=(s,e)=>
-            {
-                hook.Dispose();
-                server.Dispose();
-                tray.Dispose();
-            };
-        }
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            if(startHidden)Hide();
-        }
-        void RefreshLinks()
-        {
-            links.Text=String.Join(Environment.NewLine,server.Links());
-        }
-        void SetHook()
-        {
-            hook.Button=side.SelectedIndex==0?2:1;
-            hook.Enabled=enabled.Checked;
-        }
-        void Save()
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(config));
-            File.WriteAllText(config,(side.SelectedIndex==1?"1":"2")+(enabled.Checked?"on":"off"));
-        }
-        void ShowMain()
-        {
-            Show();
-            WindowState=FormWindowState.Normal;
-            Activate();
-        }
-        void ExitTool()
-        {
-            exiting=true;
-            Close();
-        }
-    }
     public static class Music
     {
         static readonly object gate=new object();
@@ -296,21 +34,8 @@ namespace CloudMusicRemote
         }
         public static void Control(string action)
         {
-            ushort key;
-            switch(action)
-            {
-                case "next":key=0x53;
-                break;
-                case "previous":key=0x41;
-                break;
-                case "toggle":key=0x5A;
-                break;
-                case "volumeUp":key=0x26;
-                break;
-                case "volumeDown":key=0x28;
-                break;
-                default:throw new ArgumentException("未知操作");
-            }
+            Shortcut binding=Preferences.Get(action);
+            ushort key=(ushort)binding.Key;
             lock(gate)
             {
                 if(!Running())throw new InvalidOperationException("请先在电脑上打开网易云音乐。");
@@ -321,16 +46,19 @@ namespace CloudMusicRemote
                     if(wait.ElapsedMilliseconds>1800)throw new InvalidOperationException("请松开 Ctrl / Alt / Shift / Win 键后再试。");
                     Thread.Sleep(20);
                 }
-                var input=new INPUT[]
+                var input=new List<INPUT>();
+                var modifiers=new List<ushort>();
+                if((binding.Modifiers&1)!=0)modifiers.Add(0x11);
+                if((binding.Modifiers&2)!=0)modifiers.Add(0x12);
+                if((binding.Modifiers&4)!=0)modifiers.Add(0x10);
+                foreach(var modifier in modifiers)input.Add(Key(modifier,false));
+                input.Add(Key(key,false)); input.Add(Key(key,true));
+                for(int i=modifiers.Count-1;i>=0;i--)input.Add(Key(modifiers[i],true));
+                if(SendInput((uint)input.Count,input.ToArray(),Marshal.SizeOf(typeof(INPUT)))!=input.Count)
                 {
-                    Key(0x11,false),Key(0x12,false),Key(key,false),Key(key,true),Key(0x12,true),Key(0x11,true)
-                };
-                if(SendInput((uint)input.Length,input,Marshal.SizeOf(typeof(INPUT)))!=input.Length)
-                {
-                    SendInput(3,new INPUT[]
-                    {
-                        Key(key,true),Key(0x12,true),Key(0x11,true)
-                    },Marshal.SizeOf(typeof(INPUT)));
+                    var release=new List<INPUT>();release.Add(Key(key,true));
+                    for(int i=modifiers.Count-1;i>=0;i--)release.Add(Key(modifiers[i],true));
+                    SendInput((uint)release.Count,release.ToArray(),Marshal.SizeOf(typeof(INPUT)));
                     throw new InvalidOperationException("无法发送快捷键；请让网易云与本工具使用相同权限运行。");
                 }
             }
@@ -347,7 +75,7 @@ namespace CloudMusicRemote
                 {
                     ki=new KEYBDINPUT
                     {
-                        wVk=key,dwFlags=(up?2u:0u)|((key==0x26||key==0x28)?1u:0u)
+                        wVk=key,dwFlags=(up?2u:0u)|((key>=0x25&&key<=0x28)?1u:0u)
                     }
                 }
             };
@@ -575,11 +303,14 @@ namespace CloudMusicRemote
                     });
                     return;
                 }
+                var deadline=Stopwatch.StartNew();
                 byte[] buf=new byte[8192];
                 int n=0;
                 bool complete=false;
                 while(n<buf.Length)
                 {
+                    if(deadline.ElapsedMilliseconds>=3000)return;
+                    c.ReceiveTimeout=Math.Max(1,3000-(int)deadline.ElapsedMilliseconds);
                     int v=s.ReadByte();
                     if(v<0)return;
                     buf[n++]=(byte)v;

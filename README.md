@@ -1,74 +1,78 @@
-# 网易云 · 随手控 / CloudMusic Remote
+# 随手控 / CloudMusic Remote
 
-鼠标侧键切歌，通过同一局域网内的手机控制 Windows 网易云音乐。
+原生 Windows 小软件：鼠标侧键切歌，手机在同一局域网控制网易云音乐。
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Platform](https://img.shields.io/badge/platform-Windows%20x64-0078d4)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![AI generated](https://img.shields.io/badge/AI--generated-OpenAI%20Codex-orange)
 
-> **AI 编写声明：** 本项目的首个版本由 **OpenAI Codex** 根据人类提出的需求生成，包括程序代码、手机界面、文档及测试。发布和使用由人类负责；AI 生成不代表通过独立安全审计。完整说明见 [AI_DISCLOSURE.md](AI_DISCLOSURE.md)。
+> **AI 编写声明：** 程序代码、界面、文档及测试由 **OpenAI Codex** 根据人类需求生成和迭代。发布与使用由人类负责，尚未经过独立安全审计。详见 [AI_DISCLOSURE.md](AI_DISCLOSURE.md)。
 >
-> **v0.1.0 为首个预发布版本（Pre-release）**，欢迎反馈。此项目是社区独立辅助工具，与网易云音乐及其运营方无隶属或合作关系。
+> 本项目是独立开源辅助工具，与网易云音乐或 OpenAI 无官方隶属、合作或背书关系。
 
-## 功能
+## 下载
 
-- 默认将鼠标侧上键 **XButton2** 映射为下一首，支持切换为 XButton1 或关闭映射。
-- 手机浏览器控制：播放 / 暂停、上一首、下一首、音量增大 / 减小。
-- 显示网易云窗口中的当前曲目信息。
-- 六位配对码、请求鉴权和错误配对限流。
-- 关闭窗口后在系统托盘继续运行；右击托盘可退出。
-- 不修改网易云文件，不需要网易云账号密码，也不需要手机安装 App。
+前往 [v1.0.0 正式版发布页](https://github.com/mncatwzj/cloudmusic-remote/releases/tag/v1.0.0)，下载 `CloudMusicRemote-v1.0.0-win-x64.zip`。同时提供 SHA-256 校验文件和完整源码。
 
-## 下载与使用
+变更见 [CHANGELOG.md](CHANGELOG.md) 和 [v1.0.0 更新说明](https://github.com/mncatwzj/cloudmusic-remote/blob/main/docs/RELEASE-v1.0.0.md)。
 
-1. 在本仓库的 **Releases** 页面下载 `CloudMusicRemote-v0.1.0-win-x64.zip`，解压全部文件。
-2. 打开网易云音乐，再双击 `CloudMusicRemote.exe`。
-3. 按鼠标侧上键即可切换下一首。若鼠标定义相反，在工具里选择另一侧键。
-4. 手机连接与电脑相同的路由器，浏览器输入控制面板显示的 `http://电脑IP:端口/` 地址。电脑使用网线连接也可以。
-5. 输入面板上的六位配对码，点击“连接电脑”。复制手机链接时会附带配对码，页面会自动填入。
-6. 如果手机打不开页面，点击电脑工具里的 **允许手机连接…**，并自行完成 Windows 管理员确认。该操作只放行本程序对应端口的同一子网入站连接。
+## 1.0 功能
 
-通常不需要以管理员身份运行主程序。配置防火墙需要管理员权限；若网易云本身以管理员身份运行，工具也需要匹配权限。
+- **原生桌面窗口**：WPF 实现，ChatGPT 风格深色界面；支持缩放、窄窗口收起侧栏、滚动布局。
+- **动效**：侧键选中底块平滑滑动，按钮悬停及按压反馈。
+- **三选一侧键**：上侧键 XButton2、下侧键 XButton1、禁用。禁用后两个侧键均不触发本工具切歌。
+- **自定义快捷键**：在软件内录入与网易云现有全局快捷键一致的组合，支持冲突检查、Esc 取消、恢复默认。
+- **本机保存配置**：重启后保留侧键与快捷键设置，兼容旧版侧键偏好迁移。
+- **手机液态玻璃界面**：只有一版手机遥控页，提供配对、曲目标题、播放 / 暂停、上一首、下一首及音量增减。
+- **托盘运行**：关闭窗口后继续服务；右击托盘图标可退出。
 
-## 运行要求
+## 使用方法
 
-- Windows 10/11 x64，.NET Framework 4.x（这些系统通常已自带）。
-- 网易云音乐 Windows 桌面客户端，以下**全局快捷键**处于启用且未冲突状态：
+1. 完整解压，先退出旧版，再打开 `CloudMusicRemote.exe`。
+2. 打开网易云音乐，并准备一个可播放的列表。
+3. 在“鼠标侧键”中选择上侧键、下侧键或禁用。
+4. 如果你使用了自定义网易云全局快捷键，点击本工具对应的快捷键按钮并按下相同组合。**无需更改网易云已有的快捷键。**
+5. 手机连接电脑所在路由器的 Wi-Fi；电脑通过网线连接也可以。手机浏览器打开面板显示的地址，输入六位配对码。
+6. 手机无法访问时，点击“允许手机连接…”，自行完成 Windows 管理员确认。规则仅放行此程序、此端口、同一子网的入站请求。
 
-| 功能 | 网易云全局快捷键 |
+“打开遥控页”可在本机浏览器打开同一手机页面；“复制配对链接”复制带配对码的链接。每次启动重新生成配对码和访问凭据。
+
+## 默认快捷键
+
+| 操作 | 默认组合 |
 | --- | --- |
-| 播放 / 暂停 | `Ctrl + Alt + Z` |
-| 上一首 | `Ctrl + Alt + A` |
-| 下一首 | `Ctrl + Alt + S` |
-| 音量增大 | `Ctrl + Alt + ↑` |
-| 音量减小 | `Ctrl + Alt + ↓` |
+| 播放 / 暂停 | Ctrl + Alt + Z |
+| 上一首 | Ctrl + Alt + A |
+| 下一首 | Ctrl + Alt + S |
+| 音量增大 | Ctrl + Alt + ↑ |
+| 音量减小 | Ctrl + Alt + ↓ |
 
-请在网易云 **设置 → 快捷键 → 全局快捷键** 核对。v0.1.0 使用这组固定配置；更改网易云的配置后，工具不会自动同步。
+支持 Ctrl / Alt / Shift 加字母、数字、方向键、空格或 F1–F12。本工具仅配置自己发送的组合键，不注册或修改网易云内部的快捷键。网易云中的对应全局快捷键应可用且未被其他软件占用。
 
-## 限制与故障排查
+## 运行要求与限制
 
-- 手机音量按一档一档调节网易云内部音量；当前版本没有绝对音量滑块或音量数值回读。
-- “播放 / 暂停”是切换操作；页面不会猜测真实播放状态。
-- “已发送”仅表示快捷键成功注入，不能保证网易云执行。快捷键冲突、权限不一致或没有播放列表都可能导致无响应。
-- 该工具通过网易云的全局快捷键控制播放。若其他应用抢占同样的快捷键，可能发生误响应。
-- 鼠标驱动需保留标准的 XButton1/XButton2；映射成键盘宏的侧键可能无法识别。启用映射后，选中的侧键不再执行原来的浏览器前进/后退。
-- 按住 Ctrl / Alt / Shift / Win 时，操作最多等待约 1.8 秒，超时取消，避免释放用户按住的修饰键。
-- 不支持电脑休眠、锁屏或其他桌面会话下的可靠控制，不承诺在游戏反作弊环境中可用。
-- 不同网易云版本、不同鼠标和手机仍需实际验证。v0.1.0 尚未完成全面兼容性测试。
-- 手机须能访问电脑。访客网络、路由器客户端隔离、VPN 路由和第三方防火墙可能阻止连接。
-- 默认端口为 `17663`；占用时依次尝试至 `17672`。请使用面板显示的实际端口。
-- 重启后会更换配对码和访问凭据，手机需要重新配对。IP 变化后请在面板刷新地址。
+- Windows 10/11 x64，.NET Framework 4.x，网易云音乐 Windows 客户端。无需 Node.js、Python 或手机 App。
+- 通常无需管理员权限；若网易云以管理员权限运行，本工具也需要匹配权限。
+- 鼠标驱动应保留标准 XButton1/XButton2。被改成键盘宏的侧键可能无法识别。
+- 选中的侧键启用时不执行浏览器前进 / 后退；禁用时保留其他程序中的原有用途。
+- 不回读准确播放状态、进度及绝对音量，不显示虚构进度和数值。音量通过网易云快捷键逐档调节。
+- “已发送”代表快捷键发送成功，不保证网易云执行；客户端状态、快捷键冲突或权限不匹配可能影响行为。
+- 按住 Ctrl / Alt / Shift / Win 时最多等待约 1.8 秒，未松开则取消发送。
+- 默认端口 17663，占用时依次尝试至 17672，以面板为准。
+- 访客网络、客户端隔离、VPN、第三方防火墙可能阻止手机连接。移动程序后可能需要重设防火墙规则。
+- 不保证锁屏、休眠、不同桌面会话或游戏反作弊环境下可用。不同鼠标、手机和网易云版本仍需实机验证。
+- EXE 尚未进行代码签名。
 
-## 安全与隐私
+## 配置、安全与隐私
 
-这是供**可信局域网**使用的 HTTP 遥控工具。不要做公网端口映射。配对请求没有 TLS 加密，同网段的攻击者可能截获通信。
+配置位于 `%LOCALAPPDATA%\CloudMusicRemote\preferences.json`。没有新配置时读取旧版 `settings.txt` 的侧键偏好。非法配置不会自动删除，程序提示并使用默认值。
 
-服务监听 IPv4 地址，仅接受回环和私有 / 链路本地地址；使用配对凭据验证状态查询和控制请求，校验 Host / Origin，并限制请求大小及并发数量。具体威胁边界见 [SECURITY.md](SECURITY.md)。
+不读取网易云密码、登录令牌或歌单文件，不修改网易云文件。曲目来自窗口标题。运行时无遥测、云端 API 或外部网页脚本依赖。
 
-运行时没有遥测或云端 API；程序不会读取网易云登录令牌、账号密码或歌单文件。曲目信息来自网易云的窗口标题，发送给已配对的客户端。侧键偏好存于 `%LOCALAPPDATA%\CloudMusicRemote\settings.txt`。登录凭据仅存于手机浏览器当前标签页的 sessionStorage。
+配对后的手机可以读取曲目标题并控制播放。凭据保存在当前手机标签页。HTTP 不加密，**只在可信局域网使用，不要映射到公网**。详见 [SECURITY.md](SECURITY.md)。
 
-## 从源码构建
+## 构建与验证
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Build.ps1
@@ -76,22 +80,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Test.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\Package.ps1
 ```
 
-使用 Windows 自带的 .NET Framework C# 编译器，无需安装 Node.js、Python 或 NuGet 依赖。构建产物位于 `dist/`，发布压缩包和 SHA-256 校验文件位于 `artifacts/`。运行中的同路径 EXE 需要先退出才能重新构建。
+使用 Windows 自带 .NET Framework 编译器。`dist/` 为构建目录，`artifacts/` 为发布包及 SHA-256 文件。重新编译前应退出同路径程序。
+
+37 项自动化检查覆盖接口、配对、校验、自定义快捷键和侧键映射，不触发真实音乐或更改防火墙。仓库保留测试，发布包不含测试程序。[验证范围](https://github.com/mncatwzj/cloudmusic-remote/blob/main/docs/TESTING.md)。
 
 ```text
-src/                    C# 程序和内嵌手机网页
-scripts/                构建、测试、打包和防火墙配置
-tests/                  不触发真实播放操作的接口测试
-docs/TESTING.md          自动化与手动验收范围
-.github/workflows/      Windows 持续集成与版本发布
+src/Desktop.cs          原生窗口、托盘和快捷键录入
+src/Window.xaml         桌面布局与动效
+src/Preferences.cs      配置校验及持久化
+src/CloudMusicRemote.cs 鼠标钩子、快捷键发送、局域网服务
+src/remote.html         唯一的手机遥控页面
+scripts/                构建、验证、打包、网络规则
+tests/                  内部质量验证
+.github/workflows/      Windows CI 和版本发布
 ```
 
-## 卸载
+## 卸载与贡献
 
-退出托盘程序，删除解压目录即可。可选：在 Windows 防火墙中删除 `CloudMusicRemote-LAN-` 开头的本工具规则，并删除 `%LOCALAPPDATA%\CloudMusicRemote`。程序不创建开机启动项。
+退出托盘程序后删除解压目录。可选删除 `%LOCALAPPDATA%\CloudMusicRemote` 及防火墙中 `CloudMusicRemote-LAN-` 开头的规则。程序不创建开机启动项。
 
-## 贡献与许可
-
-欢迎提交 Issue 或 Pull Request。提交前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)；变更记录见 [CHANGELOG.md](CHANGELOG.md)。
-
-本项目使用 [MIT License](LICENSE)。网易云音乐名称及相关商标归其权利人所有。
+欢迎 Issue 和 Pull Request，请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。本项目采用 [MIT License](LICENSE)，第三方名称及商标归其权利人所有。

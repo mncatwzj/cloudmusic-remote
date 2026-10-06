@@ -97,6 +97,27 @@ class RemoteTests
             Check(!RemoteServer.Private(IPAddress.Parse("172.32.0.1")), "public boundary rejected");
             Check(!RemoteServer.Private(IPAddress.Parse("8.8.8.8")), "public IP rejected");
             Check(!RemoteServer.Private(IPAddress.IPv6Loopback), "IPv6 unsupported");
+            var preferences = Preferences.Defaults();
+            Preferences.Validate(preferences);
+            Check(preferences.Keys["next"].Key == 83, "default next shortcut");
+            preferences.Keys["next"] = new Shortcut { Key = 78, Modifiers = 5 };
+            Preferences.Validate(preferences);
+            Check(preferences.Keys["next"].Label == "Ctrl + Shift + N", "custom shortcut modifiers");
+            Check(Preferences.ShouldTrigger(0, 2) && !Preferences.ShouldTrigger(0, 1), "upper side mapping");
+            Check(Preferences.ShouldTrigger(1, 1) && !Preferences.ShouldTrigger(1, 2), "lower side mapping");
+            Check(!Preferences.ShouldTrigger(2, 1) && !Preferences.ShouldTrigger(2, 2), "disabled ignores both side buttons");
+            preferences.Keys["previous"] = new Shortcut { Key = 78, Modifiers = 5 };
+            bool duplicateRejected = false;
+            try { Preferences.Validate(preferences); } catch (ArgumentException) { duplicateRejected = true; }
+            Check(duplicateRejected, "duplicate shortcut rejected");
+            preferences = Preferences.Defaults(); preferences.Keys["next"].Modifiers = 0;
+            bool unsafeRejected = false;
+            try { Preferences.Validate(preferences); } catch (ArgumentException) { unsafeRejected = true; }
+            Check(unsafeRejected, "shortcut without modifier rejected");
+            preferences = Preferences.Defaults(); preferences.Side = 9;
+            bool sideRejected = false;
+            try { Preferences.Validate(preferences); } catch (ArgumentException) { sideRejected = true; }
+            Check(sideRejected, "unknown side choice rejected");
             Console.WriteLine(checks + " checks passed; no real playback or firewall changes.");
             return 0;
         }
